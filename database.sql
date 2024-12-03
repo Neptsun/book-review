@@ -100,4 +100,14 @@ CREATE INDEX idx_books_title ON books(title);
 CREATE INDEX idx_books_author ON books(author);
 CREATE INDEX idx_books_category ON books(category);
 CREATE INDEX idx_reviews_book_id ON reviews(book_id);
-CREATE INDEX idx_reviews_user_id ON reviews(user_id); 
+CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+
+-- 创建默认管理员账户
+INSERT INTO users (username, email, password_hash, role, status)
+VALUES (
+    'admin',
+    'admin@example.com',
+    'scrypt:32768:8:1$2bONpqPqaOD13jfU$b8fe24c8966cbd2778c2aeee3378f0f168bf5f1a5d912dd302c560e75ce9f38b38aed811a842c3914f50aead9830f4e569fe8110d6ef97bd41a3910f94481947',
+    'admin',
+    'active'
+);
