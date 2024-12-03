@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h1 class="card-title">{{ book.title }}</h1>
+            <h6 class="card-subtitle mb-3 text-muted">by {{ book.author }}</h6>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>ISBN:</strong> {{ book.isbn or 'N/A' }}</p>
+                    <p><strong>Publisher:</strong> {{ book.publisher or 'N/A' }}</p>
+                    <p><strong>Publication Year:</strong> {{ book.publication_year or 'N/A' }}</p>
+                    <p><strong>Category:</strong> {{ book.category or 'N/A' }}</p>
+                    <p><strong>Average Rating:</strong> {{ "%.2f"|format(book.average_rating or 0) }} ({{ book.total_reviews }} reviews)</p>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h5>Description</h5>
+                <p>{{ book.description or 'No description available.' }}</p>
+            </div>
+            
+            <div class="mt-3">
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('books.edit', id=book.book_id) }}" class="btn btn-warning">Edit</a>
+                    <form action="{{ url_for('books.delete', id=book.book_id) }}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                {% endif %}
+                <a href="{{ url_for('books.list') }}" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    {% if 'user_id' in session %}
+        {% if user_review %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Your Review</h5>
+                    <form action="{{ url_for('reviews.edit', id=user_review.review_id) }}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <select name="rating" class="form-select" required>
+                                {% for i in range(1, 6) %}
+                                    <option value="{{ i }}" {% if user_review.rating == i %}selected{% endif %}>
+                                        {{ i }} star{% if i != 1 %}s{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comment</label>
+                            <textarea name="comment" class="form-control" rows="3">{{ user_review.comment }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Review</button>
+                    </form>
+                    <form action="{{ url_for('reviews.delete', id=user_review.review_id) }}" method="post" class="mt-2">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete your review?')">Delete Review</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Write a Review</h5>
+                    <form action="{{ url_for('reviews.add', book_id=book.book_id) }}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <select name="rating" class="form-select" required>
+                                {% for i in range(1, 6) %}
+                                    <option value="{{ i }}">{{ i }} star{% if i != 1 %}s{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comment</label>
+                            <textarea name="comment" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <h5>All Reviews</h5>
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="border-bottom mb-3 pb-3" id="review-{{ review.review_id }}">
+                        <div class="d-flex justify-content-between">
+                            <h6>
+                                {% if review.user_id == session.get('user_id') %}
+                                    <a href="{{ url_for('users.profile') }}">{{ review.username }}</a>
+                                {% else %}
+                                    {{ review.username }}
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <div class="mb-2">
+                            Rating: {{ review.rating }} star{% if review.rating != 1 %}s{% endif %}
+                        </div>
+                        {% if review.comment %}
+                            <p>{{ review.comment }}</p>
+                        {% endif %}
+                        
+                        <!-- 点赞按钮 -->
+                        {% if 'user_id' in session %}
+                            <div class="d-flex align-items-center mb-2">
+                                <button class="btn btn-sm btn-outline-primary like-btn me-2" 
+                                        data-review-id="{{ review.review_id }}"
+                                        {% if review.user_liked %}disabled{% endif %}>
+                                    <i class="bi bi-heart{% if review.user_liked %}-fill{% endif %}"></i>
+                                    <span class="like-count">{{ review.likes_count or 0 }}</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary reply-btn" 
+                                        data-review-id="{{ review.review_id }}">
+                                    Reply
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning ms-2 report-btn" 
+                                        data-review-id="{{ review.review_id }}"
+                                        {% if review.is_reported %}disabled{% endif %}>
+                                    {% if review.is_reported %}Reported{% else %}Report{% endif %}
+                                </button>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- 回复区域 -->
+                        <div class="replies-section ms-4" id="replies-{{ review.review_id }}">
+                            <!-- 回复将通过JavaScript动态加载 -->
+                        </div>
+                        
+                        <!-- 回复表 -->
+                        {% if 'user_id' in session %}
+                            <div class="reply-form d-none" id="reply-form-{{ review.review_id }}">
+                                <form class="mt-2" onsubmit="submitReply(event, {{ review.review_id }})">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Write a reply...">
+                                        <button class="btn btn-primary" type="submit">Send</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No reviews yet.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 添加点赞计数更新函数
+function loadLikeCount(reviewId) {
+    const reviewElement = document.getElementById(`review-${reviewId}`);
+    const likeCount = reviewElement.querySelector('.like-count');
+    const likeButton = reviewElement.querySelector('.like-btn');
+    const heartIcon = likeButton.querySelector('i');
+    
+    fetch(`/interactions/review/${reviewId}/likes`)
+        .then(response => response.json())
+        .then(data => {
+            likeCount.textContent = data.likes_count;
+            if (data.user_liked) {
+                likeButton.disabled = true;
+                heartIcon.classList.remove('bi-heart');
+                heartIcon.classList.add('bi-heart-fill');
+            } else {
+                likeButton.disabled = false;
+                heartIcon.classList.remove('bi-heart-fill');
+                heartIcon.classList.add('bi-heart');
+            }
+        });
+}
+</script>
+<script src="{{ url_for('static', filename='js/interactions.js') }}"></script>
+{% endblock %} 

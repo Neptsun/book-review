@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Reports{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Review Reports</h2>
+    
+    <div class="btn-group mb-3">
+        <button class="btn btn-outline-primary active" data-status="pending">Pending</button>
+        <button class="btn btn-outline-success" data-status="resolved">Resolved</button>
+        <button class="btn btn-outline-danger" data-status="rejected">Rejected</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Review</th>
+                    <th>Reporter</th>
+                    <th>Report Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>Book:</strong> 
+                            <a href="{{ url_for('books.detail', id=report.book_id) }}">{{ report.book_title }}</a>
+                        </div>
+                        <div>
+                            <strong>Review by:</strong> {{ report.review_username }}
+                            {% if report.is_deleted %}
+                                <span class="badge bg-danger">Deleted</span>
+                                <small class="text-muted">({{ report.deleted_at.strftime('%Y-%m-%d %H:%M') }})</small>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted">{{ report.review_comment[:100] }}{% if report.review_comment|length > 100 %}...{% endif %}</div>
+                    </td>
+                    <td>{{ report.reporter_username }}</td>
+                    <td>
+                        Report: {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% if report.resolved_at %}
+                            <br>
+                            Resolved: {{ report.resolved_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ 'warning' if report.status == 'pending' else 'success' if report.status == 'resolved' else 'danger' }}">
+                            {{ report.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if report.status == 'pending' %}
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success handle-report" 
+                                        data-report-id="{{ report.report_id }}"
+                                        data-action="resolve">
+                                    Accept
+                                </button>
+                                <button class="btn btn-sm btn-danger handle-report" 
+                                        data-report-id="{{ report.report_id }}"
+                                        data-action="reject">
+                                    Reject
+                                </button>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 处理状态过滤按钮
+    document.querySelectorAll('[data-status]').forEach(button => {
+        button.addEventListener('click', () => {
+            // 更新按钮状态
+            document.querySelectorAll('[data-status]').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // 重新加载带有状态过滤的页面
+            window.location.href = `{{ url_for('admin.reports') }}?status=${button.dataset.status}`;
+        });
+    });
+    
+    // 处理举报处理按钮
+    document.querySelectorAll('.handle-report').forEach(button => {
+        button.addEventListener('click', () => {
+            const reportId = button.dataset.reportId;
+            const action = button.dataset.action;
+            
+            if (confirm(`Are you sure you want to ${action} this report?`)) {
+                fetch(`/admin/reports/${reportId}/${action}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        // 重新加载页面以显示更新后的状态
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Failed to process report');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to process report');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

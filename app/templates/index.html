@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Book Review{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 mb-4 rounded">
+    <h1 class="display-4">Welcome to Book Review</h1>
+    <p class="lead">Discover great books and share your thoughts with other readers.</p>
+    {% if 'user_id' not in session %}
+        <hr class="my-4">
+        <p>Join our community to start reviewing books!</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}" role="button">Sign Up</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">Login</a>
+    {% endif %}
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Latest Books</h2>
+                <div class="list-group">
+                    {% for book in latest_books %}
+                        <a href="{{ url_for('books.detail', id=book.book_id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ book.title }}</h5>
+                                <small class="text-muted">{{ book.created_at.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                            <p class="mb-1">by {{ book.author }}</p>
+                            <small class="text-muted">Rating: {{ "%.1f"|format(book.average_rating or 0) }} ({{ book.total_reviews }} reviews)</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Top Rated Books</h2>
+                <div class="list-group">
+                    {% for book in top_rated_books %}
+                        <a href="{{ url_for('books.detail', id=book.book_id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ book.title }}</h5>
+                                <small class="text-muted">★ {{ "%.1f"|format(book.average_rating) }}</small>
+                            </div>
+                            <p class="mb-1">by {{ book.author }}</p>
+                            <small class="text-muted">{{ book.total_reviews }} reviews</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

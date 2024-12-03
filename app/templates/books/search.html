@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Search Results</h1>
+    <p class="text-muted">Found {{ books|length }} result(s) for "{{ query }}"</p>
+
+    {% if books %}
+        <div class="row">
+            {% for book in books %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">by {{ book.author }}</h6>
+                            {% if book.category %}
+                                <span class="badge bg-secondary">{{ book.category }}</span>
+                            {% endif %}
+                            <p class="card-text mt-2">
+                                {% if book.description %}
+                                    {{ book.description[:150] }}...
+                                {% endif %}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-warning">★</span>
+                                    {{ "%.1f"|format(book.average_rating or 0) }}
+                                    <small class="text-muted">({{ book.total_reviews }} reviews)</small>
+                                </div>
+                                <a href="{{ url_for('books.detail', id=book.book_id) }}" class="btn btn-primary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No books found matching your search criteria.
+            <a href="{{ url_for('books.list') }}" class="alert-link">View all books</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

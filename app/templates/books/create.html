@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Book{% endblock %}
+
+{% block content %}
+    <h1>Add New Book</h1>
+    <div class="row">
+        <div class="col-md-8">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="author" class="form-label">Author</label>
+                    <input type="text" class="form-control" id="author" name="author" required>
+                </div>
+                <div class="mb-3">
+                    <label for="isbn" class="form-label">ISBN</label>
+                    <input type="text" class="form-control" id="isbn" name="isbn">
+                </div>
+                <div class="mb-3">
+                    <label for="publisher" class="form-label">Publisher</label>
+                    <input type="text" class="form-control" id="publisher" name="publisher">
+                </div>
+                <div class="mb-3">
+                    <label for="publication_year" class="form-label">Publication Year</label>
+                    <input type="number" class="form-control" id="publication_year" name="publication_year">
+                </div>
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <input type="text" class="form-control" id="category" name="category">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Book</button>
+                <a href="{{ url_for('books.list') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+{% endblock %} 
